@@ -1,0 +1,71 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// Add this block if it isn't there - it helps with modern Prisma versions
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+enum PaymentStatus {
+  PAID
+  UNPAID
+}
+
+model User {
+  id            String        @id @default(uuid())
+  email         String        @unique
+  password      String
+  firstName     String
+  lastName      String
+  role          Role          @default(MEMBER)
+  status        PaymentStatus @default(UNPAID)
+  nextDueDate   DateTime?
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+  deletedAt     DateTime?     // Soft Delete
+
+  enrollments   Enrollment[]
+  mobilityPlans MobilityPlan[]
+}
+
+model Workout {
+  id        String   @id @default(uuid())
+  date      DateTime @unique
+  blocks    Json     // [{ type: 'WARMUP', content: '...' }, ...]
+  createdAt DateTime @default(now())
+  deletedAt DateTime?
+}
+
+model Class {
+  id          String       @id @default(uuid())
+  startTime   String       // e.g., "05:15 AM"
+  label       String?      // e.g., "Morning Grind"
+  enrollments Enrollment[]
+}
+
+model Enrollment {
+  id        String   @id @default(uuid())
+  userId    String
+  classId   String
+  date      DateTime // To track which specific day the enrollment is for
+  user      User     @relation(fields: [userId], references: [id])
+  class     Class    @relation(fields: [classId], references: [id])
+
+  @@unique([userId, date]) // ENFORCES: One class per day per member
+}
+
+model MobilityPlan {
+  id        String   @id @default(uuid())
+  userId    String
+  name      String
+  routine   Json     // [{ name: '...', duration: 60, ... }]
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id])
+}
