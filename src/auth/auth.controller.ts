@@ -5,8 +5,11 @@ import { AuthService } from './auth.service';
 export class AuthController {
   constructor(private authService: AuthService) {}
 
+  // src/auth/auth.controller.ts
+
   @Post('login')
-  async login(@Body() body: { email: string; pass: string }) {
-    return this.authService.login(body.email, body.pass);
+  async login(@Body() body: { email: string; password: string }) {
+    // Changed 'pass' to 'password'
+    return this.authService.login(body.email, body.password);
   }
 }

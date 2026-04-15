@@ -3,11 +3,11 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// Add this block if it isn't there - it helps with modern Prisma versions
 generator client {
   provider = "prisma-client-js"
 }
 
+// 1. DEFINITIONS (The missing pieces)
 enum Role {
   ADMIN
   MEMBER
@@ -18,6 +18,7 @@ enum PaymentStatus {
   UNPAID
 }
 
+// 2. MODELS
 model User {
   id            String        @id @default(uuid())
   email         String        @unique
@@ -38,9 +39,11 @@ model User {
 model Workout {
   id        String   @id @default(uuid())
   date      DateTime @unique
-  blocks    Json     // [{ type: 'WARMUP', content: '...' }, ...]
+  content   Json     
   createdAt DateTime @default(now())
-  deletedAt DateTime?
+  updatedAt DateTime @updatedAt
+
+  @@index([date])
 }
 
 model Class {
@@ -54,18 +57,21 @@ model Enrollment {
   id        String   @id @default(uuid())
   userId    String
   classId   String
-  date      DateTime // To track which specific day the enrollment is for
+  date      DateTime // The specific day of the class
+  createdAt DateTime @default(now())
+
   user      User     @relation(fields: [userId], references: [id])
   class     Class    @relation(fields: [classId], references: [id])
 
-  @@unique([userId, date]) // ENFORCES: One class per day per member
+  // One class per day per member
+  @@unique([userId, date]) 
 }
 
 model MobilityPlan {
   id        String   @id @default(uuid())
   userId    String
   name      String
-  routine   Json     // [{ name: '...', duration: 60, ... }]
+  routine   Json     
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
 }
