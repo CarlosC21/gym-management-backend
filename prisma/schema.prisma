@@ -25,6 +25,7 @@ model User {
   password      String
   firstName     String
   lastName      String
+  image         String?
   role          Role          @default(MEMBER)
   status        PaymentStatus @default(UNPAID)
   nextDueDate   DateTime?

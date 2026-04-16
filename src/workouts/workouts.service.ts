@@ -1,16 +1,28 @@
-import { Injectable, ForbiddenException, NotFoundException } from '@nestjs/common';
-import { PrismaService } from '../prisma/prisma.service'; // Adjust path if needed
+import {
+  Injectable,
+  ForbiddenException,
+  NotFoundException,
+  BadRequestException,
+} from '@nestjs/common';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class WorkoutsService {
   constructor(private prisma: PrismaService) {}
 
-  async createWorkout(date: string, content: any) {
+  async createWorkout(dateStr: string, content: any) {
+    const parsedDate = new Date(dateStr);
+
+    // Final safety check: Ensure the date is actually valid before Prisma touches it
+    if (isNaN(parsedDate.getTime())) {
+      throw new BadRequestException('The provided date is invalid.');
+    }
+
     return this.prisma.workout.upsert({
-      where: { date: new Date(date) },
+      where: { date: parsedDate },
       update: { content },
       create: {
-        date: new Date(date),
+        date: parsedDate,
         content,
       },
     });
@@ -18,8 +30,14 @@ export class WorkoutsService {
 
   async getWorkoutByDate(dateStr: string, userRole: string) {
     const requestedDate = new Date(dateStr);
+
+    // Safety check for GET requests
+    if (isNaN(requestedDate.getTime())) {
+      throw new BadRequestException('Invalid date format.');
+    }
+
     const today = new Date();
-    today.setHours(23, 59, 59, 999); // End of today
+    today.setHours(23, 59, 59, 999);
 
     // SECURITY RULE: Members cannot see future workouts
     if (userRole !== 'ADMIN' && requestedDate > today) {
@@ -30,7 +48,8 @@ export class WorkoutsService {
       where: { date: requestedDate },
     });
 
-    if (!workout) throw new NotFoundException('No workout found for this date.');
+    if (!workout)
+      throw new NotFoundException('No workout found for this date.');
     return workout;
   }
 }

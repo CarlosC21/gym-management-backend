@@ -15,19 +15,27 @@ export class AuthService {
   ) {}
 
   async login(email: string, password: string) {
-    // Changed 'pass' to 'password'
     const user = await this.prisma.user.findUnique({ where: { email } });
     if (!user) throw new UnauthorizedException('Invalid credentials');
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
-    // THE UNPAID GATE: BLOCK LOGIN AT THE SOURCE
+    // 1. THE UNPAID GATE: Login Check
+    // Using 'status' to match your Prisma schema
     if (user.status !== 'PAID' && user.role !== 'ADMIN') {
       throw new ForbiddenException('Account inactive: Please contact Admin.');
     }
 
-    const payload = { sub: user.id, email: user.email, role: user.role };
+    // 2. JWT PAYLOAD
+    // We include 'status' here so the RolesGuard can see it without a DB hit
+    const payload = {
+      sub: user.id,
+      email: user.email,
+      role: user.role,
+      status: user.status,
+    };
+
     return {
       access_token: await this.jwtService.signAsync(payload),
     };
