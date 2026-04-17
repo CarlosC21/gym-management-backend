@@ -3,16 +3,20 @@ import {
   CanActivate,
   ExecutionContext,
   ForbiddenException,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { Reflector } from '@nestjs/core';
 import { Role } from '@prisma/client';
+import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class RolesGuard implements CanActivate {
-  constructor(private reflector: Reflector) {}
+  constructor(
+    private reflector: Reflector,
+    private prisma: PrismaService,
+  ) {}
 
-  canActivate(context: ExecutionContext): boolean {
-    // console.log('--- GUARD DEBUG: THE BOUNCER IS CHECKING THE ID ---');
+  async canActivate(context: ExecutionContext): Promise<boolean> {
     const requiredRoles = this.reflector.getAllAndOverride<Role[]>('roles', [
       context.getHandler(),
       context.getClass(),
@@ -20,15 +24,32 @@ export class RolesGuard implements CanActivate {
 
     if (!requiredRoles) return true;
 
-    const { user } = context.switchToHttp().getRequest();
-    // console.log('User Status found in Token:', user?.status);
+    const request = context.switchToHttp().getRequest();
+    const userPayload = request.user;
 
-    // 1. THE ADMIN BYPASS
-    if (user.role === 'ADMIN') return true;
+    if (!userPayload) {
+      throw new UnauthorizedException('No user found in request');
+    }
 
-    // 2. THE UNPAID GATE
-    // Matches Prisma field 'status'
-    if (user.status === 'UNPAID') {
+    // THE FIX: We now look for 'userId' based on your terminal logs
+    const idToUse = userPayload.userId || userPayload.sub || userPayload.id;
+
+    if (!idToUse) {
+      console.error(
+        '--- GUARD ERROR: No ID found in Token Payload ---',
+        userPayload,
+      );
+      throw new UnauthorizedException('Invalid token payload: Missing ID');
+    }
+
+    if (userPayload.role === 'ADMIN') return true;
+
+    const user = await this.prisma.user.findUnique({
+      where: { id: idToUse }, // Using the mapped ID
+      select: { status: true, role: true },
+    });
+
+    if (!user || user.status === 'UNPAID') {
       throw new ForbiddenException({
         message: 'Access Denied: Your membership is currently inactive.',
         error_code: 'ERR_ACCOUNT_UNPAID',
@@ -36,6 +57,6 @@ export class RolesGuard implements CanActivate {
     }
 
     // 3. STANDARD ROLE CHECK
-    return requiredRoles.includes(user.role);
+    return requiredRoles.includes(user.role as Role);
   }
 }

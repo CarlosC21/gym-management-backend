@@ -21,14 +21,33 @@ export class AuthService {
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) throw new UnauthorizedException('Invalid credentials');
 
-    // 1. THE UNPAID GATE: Login Check
-    // Using 'status' to match your Prisma schema
-    if (user.status !== 'PAID' && user.role !== 'ADMIN') {
-      throw new ForbiddenException('Account inactive: Please contact Admin.');
+    const now = new Date();
+
+    // THE JIT EXPIRY CHECK
+    if (
+      user.role === 'MEMBER' &&
+      user.status === 'PAID' &&
+      user.nextDueDate &&
+      new Date(user.nextDueDate) < now
+    ) {
+      await this.prisma.user.update({
+        where: { id: user.id },
+        data: { status: 'UNPAID' },
+      });
+
+      throw new ForbiddenException({
+        code: 'ERR_ACCOUNT_UNPAID',
+        message: 'Membership expired.',
+      });
     }
 
-    // 2. JWT PAYLOAD
-    // We include 'status' here so the RolesGuard can see it without a DB hit
+    if (user.status === 'UNPAID' && user.role !== 'ADMIN') {
+      throw new ForbiddenException({
+        code: 'ERR_ACCOUNT_UNPAID',
+        message: 'Account inactive.',
+      });
+    }
+
     const payload = {
       sub: user.id,
       email: user.email,
@@ -37,7 +56,7 @@ export class AuthService {
     };
 
     return {
-      access_token: await this.jwtService.signAsync(payload),
+      accessToken: await this.jwtService.signAsync(payload),
     };
   }
 }
