@@ -8,10 +8,12 @@ import { EnrollmentsModule } from './enrollments/enrollments.module';
 import { MobilityModule } from './mobility/mobility.module';
 import { AdminService } from './admin/admin.service';
 import { AdminController } from './admin/admin.controller';
+import { ConfigModule } from '@nestjs/config';
 
 @Module({
   // 1. Only Modules go here
   imports: [
+    ConfigModule.forRoot({ isGlobal: true }),
     PrismaModule,
     AuthModule,
     WorkoutsModule,

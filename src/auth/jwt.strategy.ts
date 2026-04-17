@@ -1,20 +1,20 @@
 import { ExtractJwt, Strategy } from 'passport-jwt';
 import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
-  constructor() {
+  constructor(private configService: ConfigService) {
+    // Inject here
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey: 'SUPER_SECRET_KEY_CHOOSE_BETTER_ONE_LATER', // Ensure this matches your AuthService
+      secretOrKey: configService.getOrThrow<string>('JWT_SECRET'), // Pull from .env
     });
   }
 
   async validate(payload: any) {
-    // This object is what 'req.user' becomes in your Controllers and Guards.
-    // We MUST explicitly map 'status' here so the RolesGuard can see it.
     return {
       userId: payload.sub,
       email: payload.email,
