@@ -7,7 +7,7 @@ import {
   UseGuards,
   Req,
 } from '@nestjs/common';
-import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard'; // Verified path
+import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { RolesGuard } from '../auth/roles.guard';
 import { Roles } from '../auth/decorators/roles.decorator';
 import { WorkoutsService } from './workouts.service';
@@ -22,16 +22,15 @@ export class WorkoutsController {
   @Post()
   @Roles(Role.ADMIN)
   async create(@Body() createWorkoutDto: CreateWorkoutDto) {
-    // No more manual console logs needed; ValidationPipe handles the 'bad' data check
-    return this.workoutsService.createWorkout(
-      createWorkoutDto.date,
-      createWorkoutDto.content,
-    );
+    // FIX: We now pass the entire flattened DTO to the service
+    // The Service handles the date parsing and JSON extraction
+    return this.workoutsService.createWorkout(createWorkoutDto);
   }
 
   @Get(':date')
   @Roles(Role.ADMIN, Role.MEMBER)
   async getWorkout(@Param('date') date: string, @Req() req: any) {
+    // The service uses the role to enforce the "8:00 PM Sneak Peek" rule
     return this.workoutsService.getWorkoutByDate(date, req.user.role);
   }
 }

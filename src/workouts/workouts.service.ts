@@ -5,25 +5,28 @@ import {
   BadRequestException,
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
+import { CreateWorkoutDto } from './dto/create-workout.dto';
 
 @Injectable()
 export class WorkoutsService {
   constructor(private prisma: PrismaService) {}
 
-  async createWorkout(dateStr: string, content: any) {
-    const parsedDate = new Date(dateStr);
+  async createWorkout(dto: CreateWorkoutDto) {
+    const parsedDate = new Date(dto.date);
 
-    // Final safety check: Ensure the date is actually valid before Prisma touches it
     if (isNaN(parsedDate.getTime())) {
       throw new BadRequestException('The provided date is invalid.');
     }
 
+    // We extract the sections to store them in the 'content' JSON field
+    const { date, ...sections } = dto;
+
     return this.prisma.workout.upsert({
       where: { date: parsedDate },
-      update: { content },
+      update: { content: sections },
       create: {
         date: parsedDate,
-        content,
+        content: sections,
       },
     });
   }
@@ -31,17 +34,26 @@ export class WorkoutsService {
   async getWorkoutByDate(dateStr: string, userRole: string) {
     const requestedDate = new Date(dateStr);
 
-    // Safety check for GET requests
     if (isNaN(requestedDate.getTime())) {
       throw new BadRequestException('Invalid date format.');
     }
 
-    const today = new Date();
-    today.setHours(23, 59, 59, 999);
+    const now = new Date();
+    // The "8:00 PM Rule" Logic
+    const isAfterEight = now.getHours() >= 20;
 
-    // SECURITY RULE: Members cannot see future workouts
-    if (userRole !== 'ADMIN' && requestedDate > today) {
-      throw new ForbiddenException('You cannot see future workouts yet!');
+    // If it's before 8 PM, 'today' is the limit.
+    // If it's after 8 PM, they can see 'tomorrow'.
+    const visibilityLimit = new Date();
+    if (isAfterEight) {
+      visibilityLimit.setDate(visibilityLimit.getDate() + 1);
+    }
+    visibilityLimit.setHours(23, 59, 59, 999);
+
+    if (userRole !== 'ADMIN' && requestedDate > visibilityLimit) {
+      throw new ForbiddenException(
+        "Tomorrow's workout is locked until 8:00 PM!",
+      );
     }
 
     const workout = await this.prisma.workout.findUnique({
@@ -50,6 +62,11 @@ export class WorkoutsService {
 
     if (!workout)
       throw new NotFoundException('No workout found for this date.');
-    return workout;
+
+    // We flatten the response so the frontend doesn't have to look inside a 'content' property
+    return {
+      date: workout.date,
+      ...(workout.content as any),
+    };
   }
 }

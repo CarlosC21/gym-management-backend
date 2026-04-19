@@ -1,32 +1,22 @@
-import {
-  IsDateString,
-  IsObject,
-  IsNotEmpty,
-  ValidateNested,
-} from 'class-validator';
-import { Type } from 'class-transformer';
-
-class WorkoutContentDto {
-  @IsNotEmpty()
-  title: string;
-
-  @IsNotEmpty()
-  description: string;
-
-  @IsObject()
-  schema: {
-    rounds?: number;
-    reps?: string;
-    movements: string[];
-  };
-}
+import { IsDateString, IsString, IsOptional } from 'class-validator';
 
 export class CreateWorkoutDto {
   @IsDateString({}, { message: 'Date must be a valid ISO string (YYYY-MM-DD)' })
   date: string;
 
-  @IsObject()
-  @ValidateNested()
-  @Type(() => WorkoutContentDto)
-  content: WorkoutContentDto;
+  // We flatten the structure to match the Blueprint 5-sections
+  @IsString()
+  mobility: string;
+
+  @IsString()
+  warmUp: string;
+
+  @IsString()
+  skillStrength: string;
+
+  @IsString()
+  wodMetcon: string;
+
+  @IsString()
+  other: string;
 }
