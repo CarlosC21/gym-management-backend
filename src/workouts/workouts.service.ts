@@ -18,7 +18,7 @@ export class WorkoutsService {
       throw new BadRequestException('The provided date is invalid.');
     }
 
-    // We extract the sections to store them in the 'content' JSON field
+    // Extract sections to store in the 'content' JSON field
     const { date, ...sections } = dto;
 
     return this.prisma.workout.upsert({
@@ -42,8 +42,7 @@ export class WorkoutsService {
     // The "8:00 PM Rule" Logic
     const isAfterEight = now.getHours() >= 20;
 
-    // If it's before 8 PM, 'today' is the limit.
-    // If it's after 8 PM, they can see 'tomorrow'.
+    // Visibility Limit calculation
     const visibilityLimit = new Date();
     if (isAfterEight) {
       visibilityLimit.setDate(visibilityLimit.getDate() + 1);
@@ -63,8 +62,9 @@ export class WorkoutsService {
     if (!workout)
       throw new NotFoundException('No workout found for this date.');
 
-    // We flatten the response so the frontend doesn't have to look inside a 'content' property
+    // CRITICAL FIX: Include 'id' so the frontend can use it for Check-ins
     return {
+      id: workout.id, // The UUID required for the Attendance table
       date: workout.date,
       ...(workout.content as any),
     };

@@ -9,6 +9,8 @@ import { MobilityModule } from './mobility/mobility.module';
 import { AdminService } from './admin/admin.service';
 import { AdminController } from './admin/admin.controller';
 import { ConfigModule } from '@nestjs/config';
+import { MembersModule } from './members/members.module';
+import { AttendanceModule } from './attendance/attendance.module';
 
 @Module({
   // 1. Only Modules go here
@@ -19,6 +21,8 @@ import { ConfigModule } from '@nestjs/config';
     WorkoutsModule,
     EnrollmentsModule,
     MobilityModule,
+    MembersModule,
+    AttendanceModule,
   ],
   controllers: [AppController, AdminController],
   // 2. Services go here
