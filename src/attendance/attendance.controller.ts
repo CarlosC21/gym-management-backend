@@ -45,13 +45,13 @@ export class AttendanceController {
   @Get('status/:wodId')
   async getStatus(@Req() req: any, @Param('wodId') wodId: string) {
     const userId = req.user.id || req.user.userId || req.user.sub;
-    
+
     // We now return the full record (including classId) instead of just a boolean
     const attendanceRecord = await this.attendanceService.getCheckInStatus(
       userId,
       wodId,
     );
-    
+
     return {
       isCheckedIn: !!attendanceRecord,
       activeClassId: attendanceRecord?.classId || null,

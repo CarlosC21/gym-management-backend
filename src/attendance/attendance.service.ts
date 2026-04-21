@@ -1,9 +1,6 @@
 // src/attendance/attendance.service.ts
 
-import {
-  Injectable,
-  NotFoundException,
-} from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
@@ -56,7 +53,7 @@ export class AttendanceService {
   }
 
   /**
-   * Returns the attendance record so the frontend knows 
+   * Returns the attendance record so the frontend knows
    * exactly WHICH classId is currently "checked in".
    */
   async getCheckInStatus(userId: string, wodId: string) {
