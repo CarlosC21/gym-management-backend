@@ -7,7 +7,7 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// 1. DEFINITIONS (The missing pieces)
+// 1. DEFINITIONS
 enum Role {
   ADMIN
   MEMBER
@@ -20,31 +20,32 @@ enum PaymentStatus {
 
 // 2. MODELS
 model User {
-  id            String        @id @default(uuid())
-  email         String        @unique
-  password      String
-  firstName     String
-  lastName      String
-  image         String?
-  role          Role          @default(MEMBER)
-  status        PaymentStatus @default(UNPAID)
-  nextDueDate   DateTime?
-  createdAt     DateTime      @default(now())
+  id              String        @id @default(uuid())
+  email           String        @unique
+  password        String
+  firstName       String
+  lastName        String
+  image           String?
+  role            Role          @default(MEMBER)
+  status          PaymentStatus @default(UNPAID)
+  nextDueDate     DateTime?
+  createdAt       DateTime      @default(now())
   lastPaymentDate DateTime?
-  updatedAt     DateTime      @updatedAt
-  deletedAt     DateTime?     // Soft Delete
+  updatedAt       DateTime      @updatedAt
+  deletedAt       DateTime?     // Soft Delete
 
-  enrollments   Enrollment[]
-  mobilityPlans MobilityPlan[]
-  attendance Attendance[]
+  mobilityPlans   MobilityPlan[]
+  attendance      Attendance[]
 }
 
 model Workout {
-  id        String   @id @default(uuid())
-  date      DateTime @unique
+  id        String       @id @default(uuid())
+  date      DateTime     @unique
   content   Json     
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  attendance Attendance[]
 
   @@index([date])
 }
@@ -53,21 +54,22 @@ model Class {
   id          String       @id @default(uuid())
   startTime   String       // e.g., "05:15 AM"
   label       String?      // e.g., "Morning Grind"
-  enrollments Enrollment[]
+  attendance  Attendance[]
 }
 
-model Enrollment {
+model Attendance {
   id        String   @id @default(uuid())
   userId    String
-  classId   String
-  date      DateTime // The specific day of the class
+  wodId     String
+  classId   String   // The specific Time Slot (Class) selected
   createdAt DateTime @default(now())
 
   user      User     @relation(fields: [userId], references: [id])
+  workout   Workout  @relation(fields: [wodId], references: [id])
   class     Class    @relation(fields: [classId], references: [id])
 
-  // One class per day per member
-  @@unique([userId, date]) 
+  // Ensures a member can only "vote/check-in" to ONE slot per WOD
+  @@unique([userId, wodId]) 
 }
 
 model MobilityPlan {
@@ -77,15 +79,4 @@ model MobilityPlan {
   routine   Json     
   createdAt DateTime @default(now())
   user      User     @relation(fields: [userId], references: [id])
-}
-
-model Attendance {
-  id        String   @id @default(uuid())
-  userId    String
-  wodId     String
-  user      User     @relation(fields: [userId], references: [id])
-  createdAt DateTime @default(now())
-
-  // Ensure an athlete can only check in ONCE per WOD
-  @@unique([userId, wodId])
 }
