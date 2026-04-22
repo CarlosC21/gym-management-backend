@@ -61,14 +61,14 @@ model Attendance {
   id        String   @id @default(uuid())
   userId    String
   wodId     String
-  classId   String   // The specific Time Slot (Class) selected
+  classId   String   
   createdAt DateTime @default(now())
 
-  user      User     @relation(fields: [userId], references: [id])
+  // ADDED 'onDelete: Cascade' HERE
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   workout   Workout  @relation(fields: [wodId], references: [id])
   class     Class    @relation(fields: [classId], references: [id])
 
-  // Ensures a member can only "vote/check-in" to ONE slot per WOD
   @@unique([userId, wodId]) 
 }
 
@@ -78,5 +78,7 @@ model MobilityPlan {
   name      String
   routine   Json     
   createdAt DateTime @default(now())
-  user      User     @relation(fields: [userId], references: [id])
+  
+  // ADDED 'onDelete: Cascade' HERE
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
