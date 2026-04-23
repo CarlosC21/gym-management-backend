@@ -12,8 +12,8 @@ export class MobilityController {
   @Post('generate')
   @Roles('MEMBER', 'ADMIN')
   async generate(
-    @Req() req: any, 
-    @Body() body: { focus: string; duration: number; equipment: string }
+    @Req() req: any,
+    @Body() body: { focus: string; duration: number; equipment: string },
   ) {
     return this.mobilityService.generatePlan(req.user.userId, body);
   }
