@@ -38,14 +38,18 @@ export class WorkoutsService {
       throw new BadRequestException('The provided date is invalid.');
     }
 
-    const { date, ...sections } = dto;
-
     return this.prisma.workout.upsert({
       where: { date: parsedDate },
-      update: { content: sections },
+      update: {
+        title: dto.title,
+        description: dto.description,
+        type: dto.type || 'COMPLETION',
+      },
       create: {
         date: parsedDate,
-        content: sections,
+        title: dto.title,
+        description: dto.description,
+        type: dto.type || 'COMPLETION',
       },
     });
   }
@@ -105,7 +109,9 @@ export class WorkoutsService {
     return {
       id: workout.id,
       date: workout.date,
-      ...(workout.content as any),
+      title: workout.title,
+      description: workout.description,
+      type: workout.type,
       slots: sortedSlots,
     };
   }

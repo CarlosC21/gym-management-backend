@@ -1,22 +1,25 @@
-import { IsDateString, IsString, IsOptional } from 'class-validator';
+import {
+  IsDateString,
+  IsString,
+  IsOptional,
+  IsEnum,
+  IsNotEmpty,
+} from 'class-validator';
+import { WodType } from '@prisma/client';
 
 export class CreateWorkoutDto {
   @IsDateString({}, { message: 'Date must be a valid ISO string (YYYY-MM-DD)' })
   date: string;
 
-  // We flatten the structure to match the Blueprint 5-sections
+  @IsOptional()
   @IsString()
-  mobility: string;
+  title?: string;
 
   @IsString()
-  warmUp: string;
+  @IsNotEmpty()
+  description: string;
 
-  @IsString()
-  skillStrength: string;
-
-  @IsString()
-  wodMetcon: string;
-
-  @IsString()
-  other: string;
+  @IsOptional()
+  @IsEnum(WodType)
+  type?: WodType;
 }

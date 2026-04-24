@@ -1,5 +1,3 @@
-// src/attendance/attendance.service.ts
-
 import { Injectable, NotFoundException } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 
@@ -9,7 +7,7 @@ export class AttendanceService {
 
   /**
    * Sync Attendance: The "WhatsApp Vote" Replacement.
-   * Handles both the first check-in and switching time slots.
+   * Handles both the first check-in and switching time slots seamlessly.
    */
   async syncAttendance(userId: string, wodId: string, classId: string) {
     // 1. Verify the WOD and the Class Slot exist
@@ -37,6 +35,21 @@ export class AttendanceService {
         userId: userId,
         wodId: wodId,
         classId: classId,
+      },
+    });
+  }
+
+  /**
+   * Leave Class: Removes the attendance record for the specific WOD.
+   */
+  async leaveClass(userId: string, wodId: string, classId: string) {
+    // We target the unique compound key to ensure we only drop this specific reservation
+    return this.prisma.attendance.delete({
+      where: {
+        userId_wodId: {
+          userId: userId,
+          wodId: wodId,
+        },
       },
     });
   }

@@ -18,37 +18,68 @@ enum PaymentStatus {
   UNPAID
 }
 
+enum WodType {
+  AMRAP
+  FOR_TIME
+  WEIGHT
+  EMOM
+  COMPLETION
+}
+
 // 2. MODELS
 model User {
-  id              String        @id @default(uuid())
-  email           String        @unique
-  password        String
-  mustChangePassword Boolean   @default(true)
-  firstName       String
-  lastName        String
-  image           String?
-  role            Role          @default(MEMBER)
-  status          PaymentStatus @default(UNPAID)
-  nextDueDate     DateTime?
-  createdAt       DateTime      @default(now())
-  lastPaymentDate DateTime?
-  updatedAt       DateTime      @updatedAt
-  deletedAt       DateTime?     // Soft Delete
+  id                 String         @id @default(uuid())
+  email              String         @unique
+  password           String
+  mustChangePassword Boolean        @default(true)
+  firstName          String
+  lastName           String
+  image              String?
+  role               Role           @default(MEMBER)
+  status             PaymentStatus  @default(UNPAID)
+  nextDueDate        DateTime?
+  createdAt          DateTime       @default(now())
+  lastPaymentDate    DateTime?
+  updatedAt          DateTime       @updatedAt
+  deletedAt          DateTime?      // Soft Delete
 
-  mobilityPlans   MobilityPlan[]
-  attendance      Attendance[]
+  mobilityPlans      MobilityPlan[]
+  attendance         Attendance[]
+  wodResults         WodResult[]
 }
 
 model Workout {
-  id        String       @id @default(uuid())
-  date      DateTime     @unique
-  content   Json     
-  createdAt DateTime     @default(now())
-  updatedAt DateTime     @updatedAt
+  id          String       @id @default(uuid())
+  date        DateTime     @unique
+  title       String?      // e.g., "Hera", "The Murph"
+  description String?      @db.Text
+  content     Json?        // Legacy support for older builders
+  type        WodType      @default(COMPLETION)
+  
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  attendance Attendance[]
+  attendance  Attendance[]
+  wodResults  WodResult[]
 
   @@index([date])
+}
+
+model WodResult {
+  id        String   @id @default(uuid())
+  userId    String
+  wodId     String
+  
+  // Score stored as string to handle 21:05, 12+5, or 100kg
+  score     String
+  rx        Boolean  @default(true)
+  notes     String?  @db.Text
+  createdAt DateTime @default(now())
+
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workout   Workout  @relation(fields: [wodId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, wodId]) // One score per athlete per day
 }
 
 model Class {
@@ -65,7 +96,6 @@ model Attendance {
   classId   String   
   createdAt DateTime @default(now())
 
-  // ADDED 'onDelete: Cascade' HERE
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   workout   Workout  @relation(fields: [wodId], references: [id])
   class     Class    @relation(fields: [classId], references: [id])
@@ -80,6 +110,5 @@ model MobilityPlan {
   routine   Json     
   createdAt DateTime @default(now())
   
-  // ADDED 'onDelete: Cascade' HERE
   user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 }
