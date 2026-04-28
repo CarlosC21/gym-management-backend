@@ -3,7 +3,7 @@ Gym Engine is a high-performance, production-ready gym management application de
 
 The project is built on a "No Magic" philosophy, prioritizing explicit business rules, structured data flow, and high-utility UI over complex abstractions or heavy third-party dependencies.
 
-Core Architecture
+# Core Architecture
 The system is split into two specialized repositories to ensure separation of concerns and scalability:
 
 Backend: NestJS, PostgreSQL, Prisma ORM (v6.2.1).
@@ -12,11 +12,11 @@ Frontend: Next.js 16 (App Router), Tailwind CSS, Lucide React.
 
 Design Language: High-contrast, dark mode SaaS aesthetic optimized for gym-floor utility with high-tap targets.
 
-Key Technical Features
+# Key Technical Features
 1. The WOD Engine
 A custom workout delivery system that handles dynamic programming.
 
-Smart Hydration: Backend-driven form hydration for workout creation.
+* Smart Hydration: Backend-driven form hydration for workout creation.
 
 Preservation of Intent: Uses whitespace-pre-wrap rendering to maintain precise formatting for complex workout descriptions.
 
