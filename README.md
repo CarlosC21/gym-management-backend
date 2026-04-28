@@ -1,4 +1,4 @@
-Gym Engine
+# Gym Engine
 Gym Engine is a high-performance, production-ready gym management application designed for single-location fitness facilities. It provides a streamlined authority for gym owners to manage athletes, programming, and billing through a dedicated SaaS-style interface.
 
 The project is built on a "No Magic" philosophy, prioritizing explicit business rules, structured data flow, and high-utility UI over complex abstractions or heavy third-party dependencies.
